@@ -1,0 +1,45 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "node build/prod/index.js",
+    "start:dev": "NODE_ENV=development node node_modules/webpack/bin/webpack.js --config webpack.config.js",
+    "build": "NODE_ENV=production node node_modules/webpack/bin/webpack.js --config webpack.config.js",
+    "run:dev": "NODE_ENV=development nodemon build/dev/index.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "axios": "^0.19.2",
+    "commander": "^5.1.0",
+    "express": "^4.17.1",
+    "express-winston": "^4.0.3",
+    "fs-extra": "^9.0.0",
+    "level-ttl": "^3.1.1",
+    "leveldown": "^5.6.0",
+    "levelup": "^4.4.0",
+    "multer": "^1.4.2",
+    "redis": "^3.0.2",
+    "winston": "^3.2.1"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.6",
+    "@types/fs-extra": "^8.1.0",
+    "@types/jest": "^25.2.1",
+    "@types/lodash": "^4.14.150",
+    "@types/node": "^13.13.4",
+    "@types/supertest": "^2.0.8",
+    "jest": "^25.5.0",
+    "nodemon": "^2.0.3",
+    "supertest": "^4.0.2",
+    "ts-jest": "^25.4.0",
+    "ts-loader": "^7.0.1",
+    "ts-node": "^8.9.1",
+    "typescript": "^3.8.3",
+    "webpack": "^4.41.2",
+    "webpack-cli": "^3.3.9",
+    "webpack-node-externals": "^1.7.2",
+    "webpack-shell-plugin": "^0.5.0"
+  }
+}
