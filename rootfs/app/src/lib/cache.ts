@@ -1,15 +1,13 @@
 // a key-value store base redis or leveldb.
 import redis from 'redis'
-import bluebird from 'bluebird'
+import { promisify } from 'util'
 import levelup from 'levelup'
 import leveldown from 'leveldown'
 import levelttl from 'level-ttl'
 import path from 'path'
 import _ from 'lodash'
 import fs from 'fs-extra'
-
-bluebird.promisifyAll(redis.RedisClient.prototype)
-bluebird.promisifyAll(redis.Multi.prototype)
+import redisMock from 'redis-mock'
 
 interface Store {
   key_prefix?: string;
@@ -19,39 +17,59 @@ interface Store {
   del(key: string): Promise<boolean>;
 }
 
-class RedisStore implements Store {
+export class RedisStore implements Store {
   key_prefix: string;
   client: redis.RedisClient
+
+  _get: Function;
+  _set: Function;
+  _del: Function;
   constructor (redis_uri: string, key_prefix: string = '') {
     this.key_prefix = key_prefix
-    this.client = redis.createClient(redis_uri)
+    if (process.env.NODE_ENV === 'test') {
+      this.client = redisMock.createClient()
+    } else {
+      this.client = redis.createClient(redis_uri)
+    }
+
+    this._get = this.promisify('get')
+    this._set = this.promisify('set')
+    this._del = this.promisify('del')
   }
   async get (key: string): Promise<any> {
-    return await this.client.get(`${this.key_prefix}${key}`)
+    return await this._get(`${this.key_prefix}${key}`)
   }
   async set (key: string, value: any, ttl?: number): Promise<boolean> {
     if (!_.isString(value)) {
       value = JSON.stringify(value)
     }
     if (ttl) {
-      await this.client.set(`${this.key_prefix}${key}`, value, 'EX', ttl)
+      await this._set(`${this.key_prefix}${key}`, value, 'EX', ttl)
     } else {
-      await this.client.set(`${this.key_prefix}${key}`, value)
+      await this._set(`${this.key_prefix}${key}`, value)
     }
     return true
   }
   async del (key: string): Promise<boolean> {
-    return await this.client.del(`${this.key_prefix}${key}`)
+    return await this._del(`${this.key_prefix}${key}`)
+  }
+
+  private promisify(method: string) {
+    return promisify(this.client[method]).bind(this.client)
   }
 }
 
-class LevelDBStore implements Store {
+export class LevelDBStore implements Store {
   client: any;
   constructor (db_path: string) {
     this.client = levelttl(levelup(leveldown(db_path)))
   }
-  async get (key: string): Promise<string> {
-    return await this.client.get(key)
+  async get (key: string): Promise<string|undefined> {
+    try {
+      return await this.client.get(key)
+    } catch (error) {
+      return
+    }
   }
   async set (key: string, value: any, ttl?: number): Promise<boolean> {
     if (!_.isString(value)) {
@@ -69,14 +87,30 @@ class LevelDBStore implements Store {
   }
 }
 
+let levelDBStore: LevelDBStore
+let redisStore: RedisStore
+export const createLevelDBStore = (): Store => {
+  if (!levelDBStore) {
+    let LEVELDB_PATH = process.env.LEVELDB_PATH || path.resolve('tmp/data')
+    LEVELDB_PATH = `${LEVELDB_PATH}-${process.env.NODE_ENV || 'production'}`
+    let dirname = path.dirname(LEVELDB_PATH)
+    fs.ensureDirSync(dirname)
+    levelDBStore = new LevelDBStore(LEVELDB_PATH)
+  }
+  return levelDBStore
+}
+export const createRedisStore = (): Store => {
+  if (!redisStore) {
+    redisStore = new RedisStore(process.env.REDIS_URI, process.env.REDIS_PREFIX || '')
+  }
+  return redisStore
+}
+
 let db: Store
-if (process.env.CACHE_STORE_TYPE === 'redis') {
-  db = new RedisStore(process.env.REDIS_URI, process.env.REDIS_PREFIX || '')
+if (process.env.CACHE_STORE_TYPE === 'leveldb' && process.env.NODE_ENV !== 'test') {
+  db = createLevelDBStore()
 } else {
-  const LEVELDB_PATH = process.env.LEVELDB_PATH || path.resolve('tmp/data')
-  let dirname = path.dirname(LEVELDB_PATH)
-  fs.ensureDirSync(dirname)
-  db = new LevelDBStore(LEVELDB_PATH)
+  db = createRedisStore()
 }
 
 export default db

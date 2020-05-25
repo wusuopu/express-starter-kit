@@ -1,8 +1,20 @@
 version: "2"
 
 services:
+  mongodb:
+    image: mongo:3.2.10
+    ports:
+      - "27017"
+    volumes:
+      - ./tmp/data:/data/db
+
+  redis:
+    image: redis
+    volumes:
+      - ./tmp/redis:/data
+
   app:
-    image: node:8-alpine
+    image: node:10-alpine
     expose:
       - "80"
     ports:
@@ -11,6 +23,9 @@ services:
       - ./rootfs/app:/app
     environment:
       - NODE_ENV=development
+      - REDIS_URI=redis://redis/0
+      - MONGO_URI=mongodb://mongodb:27017/backend
+      - MONGO_URI_TEST=mongodb://mongodb:27017/backend-test
     working_dir: /app
     command: cat
     tty: true

@@ -6,16 +6,15 @@ const { NODE_ENV = 'production' } = process.env;
 const rootPath = path.resolve(__dirname)
 
 let plugins = []
-if (NODE_ENV === 'development') {
-  plugins.push(new WebpackShellPlugin({
-    onBuildEnd: ['yarn run:dev']
-  }))
-}
+// if (NODE_ENV === 'development') {
+//   plugins.push(new WebpackShellPlugin({
+//     onBuildEnd: ['yarn run:dev']
+//   }))
+// }
 
 module.exports = {
   devtool: 'hidden-source-map',
   entry: {
-    index: path.resolve(rootPath, './src/index.ts'),
     cli: path.resolve(rootPath, './src/cli.ts')
   },
   mode: NODE_ENV,
@@ -23,7 +22,7 @@ module.exports = {
   watch: NODE_ENV === 'development',
   externals: [ nodeExternals() ],
   output: {
-    path: path.resolve(rootPath, 'build', NODE_ENV === 'development' ? 'dev' : 'prod'),
+    path: path.resolve(rootPath, 'bin'),
     filename: '[name].js'
   },
   resolve: {

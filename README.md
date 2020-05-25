@@ -1,6 +1,8 @@
 # express-starter-kit
 express typescript 的项目模板。
 
+项目包含了：AdminBro, mongoose, redis, jest 的配置。
+
 
 # 快速开始
 
