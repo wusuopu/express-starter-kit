@@ -15,7 +15,7 @@
     "admin-bro-expressjs": "^2.0.5",
     "admin-bro-mongoose": "^0.5.2",
     "admin-bro-sequelizejs": "^0.4.2",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "bcryptjs": "^2.4.3",
     "commander": "^5.1.0",
     "connect-mongo": "^3.2.0",
